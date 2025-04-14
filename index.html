@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockly PySpark Integration</title>
+    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+    <style>
+        #blocklyDiv {
+            height: 450px;
+            width: 100%;
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <h1>Interactive Spark Workflow</h1>
+    
+    <div id="blocklyDiv"></div>
+    
+    <!-- This function generateCode() is in app.js -->
+    <button onclick="generateCode()">Generate PySpark Code</button>
+    <pre id="generatedCode"></pre>
+    
+    <script src="app.js"></script>
+</body>
+</html>
