@@ -1,8 +1,16 @@
 from flask import Flask, request, jsonify
 from pyspark.sql import SparkSession
+import csv
 
 app = Flask(__name__)
 spark = SparkSession.builder.appName("Blockly PySpark").getOrCreate()
+
+sc = spark.sparkContext
+
+def parse_csv(path):
+    return sc.textFile(path).mapPartitionsWithIndex(
+        lambda idx, it: iter(list(it)[1:]) if idx == 0 else it
+    ).map(lambda line: next(csv.reader([line])))
 
 @app.route('/execute_pyspark', methods=['POST'])
 def execute_pyspark():
