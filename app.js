@@ -134,6 +134,22 @@ Blockly.defineBlocksWithJsonArray([
         "colour": 270,
         "tooltip": "Apply a user-defined function to the DataFrame",
         "helpUrl": ""
+    },
+    //Block for reading in the data
+    {
+        "type": "read_csv",
+        "message0": "Read CSV %1",
+        "args0": [
+            {
+                "type": "field_input",
+                "name": "func",
+                "text": "/data/flights.csv"
+            }
+        ],
+        "output": "DataFrame",
+        "colour": 270,
+        "tooltip": "Apply a user-defined function to the DataFrame",
+        "helpUrl": ""
     }
 ]);
 
@@ -147,6 +163,7 @@ var workspace = Blockly.inject('blocklyDiv', {
                 '<block type="reduceByKey"></block>' +
                 '<block type="groupBy"></block>' +
                 '<block type="udf"></block>' +
+                '<block type="read_csv"></block>' +
              '</xml>',
     grid: {spacing: 20, length: 3, colour: '#ccc', snap: true}
 });
