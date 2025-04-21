@@ -137,8 +137,8 @@ Blockly.defineBlocksWithJsonArray([
     },
     //Block for reading in the data
     {
-        "type": "read_csv",
-        "message0": "Read CSV %1",
+        "type": "parse_csv",
+        "message0": "Parse CSV %1",
         "args0": [
             {
                 "type": "field_input",
@@ -163,11 +163,63 @@ var workspace = Blockly.inject('blocklyDiv', {
                 '<block type="reduceByKey"></block>' +
                 '<block type="groupBy"></block>' +
                 '<block type="udf"></block>' +
-                '<block type="read_csv"></block>' +
+                '<block type="parse_csv"></block>' +
              '</xml>',
     grid: {spacing: 20, length: 3, colour: '#ccc', snap: true}
 });
+Blockly.Python.forBlock['create_dataframe'] = function(block, generator) {
+    const data = block.getFieldValue('data');
+    const code = `sc.parallelize(${data})`;
+    return [code, Blockly.Python.ORDER_ATOMIC];
+  };
+  
+  Blockly.Python.forBlock['select_columns'] = function(block, generator) {
+    const columns = block.getFieldValue('columns').split(',').map(col => `'${col.trim()}'`).join(', ');
+    const df = generator.valueToCode(block, 'df', Blockly.Python.ORDER_ATOMIC);
+    const code = `${df}.select(${columns})`;
+    return [code, Blockly.Python.ORDER_FUNCTION_CALL];
+  };
+  
+  Blockly.Python.forBlock['map'] = function(block, generator) {
+    const df = generator.valueToCode(block, 'df', Blockly.Python.ORDER_ATOMIC);
+    const func = block.getFieldValue('func');
+    const code = `${df}.map(${func})`;
+    return [code, Blockly.Python.ORDER_FUNCTION_CALL];
+  };
+  
+  Blockly.Python.forBlock['filter'] = function(block, generator) {
+    const df = generator.valueToCode(block, 'df', Blockly.Python.ORDER_ATOMIC);
+    const condition = block.getFieldValue('condition');
+    const code = `${df}.filter(lambda x: ${condition})`;
+    return [code, Blockly.Python.ORDER_FUNCTION_CALL];
+  };
+  
+  Blockly.Python.forBlock['reduceByKey'] = function(block, generator) {
+    const df = generator.valueToCode(block, 'df', Blockly.Python.ORDER_ATOMIC);
+    const func = block.getFieldValue('func');
+    const code = `${df}.reduceByKey(${func})`;
+    return [code, Blockly.Python.ORDER_FUNCTION_CALL];
+  };
+  
+  Blockly.Python.forBlock['groupBy'] = function(block, generator) {
+    const df = generator.valueToCode(block, 'df', Blockly.Python.ORDER_ATOMIC);
+    const key = block.getFieldValue('key');
+    const code = `${df}.groupBy(lambda x: x['${key}'])`;
+    return [code, Blockly.Python.ORDER_FUNCTION_CALL];
+  };
+  
+  Blockly.Python.forBlock['udf'] = function(block, generator) {
+    const func = block.getFieldValue('func');
+    const code = `udf(${func})`;
+    return [code, Blockly.Python.ORDER_FUNCTION_CALL];
+  };
 
+  Blockly.Python.forBlock['parse_csv'] = function(block, generator) {
+    const func = block.getFieldValue('func');
+    const code = `parse_csv('${func}')`;
+    return [code, Blockly.Python.ORDER_FUNCTION_CALL];
+  };
+  
 // Function to generate PySpark code from blocks
 function generateCode() {
     var code = Blockly.Python.workspaceToCode(workspace);
