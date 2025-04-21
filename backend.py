@@ -1,8 +1,12 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from pyspark.sql import SparkSession
 
 app = Flask(__name__)
 spark = SparkSession.builder.appName("Blockly PySpark").getOrCreate()
+
+@app.route('/', methods=["GET"])
+def index():
+    return render_template('index.html')
 
 @app.route('/execute_pyspark', methods=['POST'])
 def execute_pyspark():
