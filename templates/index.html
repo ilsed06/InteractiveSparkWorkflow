@@ -17,10 +17,10 @@
 <body>
     <h1>Interactive Spark Workflow</h1>
     
-    <div id="blocklyDiv"></div>
+    <div id="blocklyDiv" onchange="generateCode()"></div>
     
     <!-- This function generateCode() is in app.js -->
-    <button onclick="generateCode()">Generate PySpark Code</button>
+    <button onclick="generateCode()">Execute Pipeline</button>
     <pre id="generatedCode"></pre>
     
     <script src="/static/app.js"></script>

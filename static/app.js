@@ -134,6 +134,22 @@ Blockly.defineBlocksWithJsonArray([
         "colour": 270,
         "tooltip": "Apply a user-defined function to the DataFrame",
         "helpUrl": ""
+    },
+    //Block for reading in the data
+    {
+        "type": "parse_csv",
+        "message0": "Parse CSV %1",
+        "args0": [
+            {
+                "type": "field_input",
+                "name": "func",
+                "text": "/data/flights.csv"
+            }
+        ],
+        "output": "DataFrame",
+        "colour": 270,
+        "tooltip": "Apply a user-defined function to the DataFrame",
+        "helpUrl": ""
     }
 ]);
 
@@ -147,6 +163,7 @@ var workspace = Blockly.inject('blocklyDiv', {
                 '<block type="reduceByKey"></block>' +
                 '<block type="groupBy"></block>' +
                 '<block type="udf"></block>' +
+                '<block type="parse_csv"></block>' +
              '</xml>',
     grid: {spacing: 20, length: 3, colour: '#ccc', snap: true}
 });
@@ -196,6 +213,13 @@ Blockly.Python.forBlock['create_dataframe'] = function(block, generator) {
     const code = `udf(${func})`;
     return [code, Blockly.Python.ORDER_FUNCTION_CALL];
   };
+
+  Blockly.Python.forBlock['parse_csv'] = function(block, generator) {
+    const func = block.getFieldValue('func');
+    const code = `parse_csv('${func}')`;
+    return [code, Blockly.Python.ORDER_FUNCTION_CALL];
+  };
+  
 // Function to generate PySpark code from blocks
 function generateCode() {
     var code = Blockly.Python.workspaceToCode(workspace);
