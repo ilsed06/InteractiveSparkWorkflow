@@ -233,14 +233,45 @@ workspace.addChangeListener(() => {
   document.getElementById("generatedCode").textContent = code;
 });
 
-// Submits the generated PySpark code to the backend for execution.
-function executePyspark() {
-    const code = document.getElementById("generatedCode").textContent;
-    fetch('execute_pyspark', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(code)
-    }).then(response => console.log(response));
+// Check the existence of file FILENAME in the current working directory
+// on the backend machine.
+// Returns true if it exists, false otherwise. Returns a promise.
+function checkFile(filename) {
+  return fetch("check_file", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(filename),
+  })
+    .then((response) => response.json())
+    .then((json) => {
+      return json.status === "success" ? true : false;
+    })
+    .catch((error) => {
+      console.log(error);
+      return false;
+    });
+}
+
+// Checks given pipeline parameters and files, and if all are valid,
+// submits the generated PySpark code to the backend for execution.
+async function executePyspark() {
+  const code = document.getElementById("generatedCode").textContent;
+  const fileName = code.match(/parallelize\((.*)\)/)[1];
+  const fileExists = await checkFile(fileName);
+
+  // Do not execute pipeline if file does not exist in backend database.
+  if (!fileExists) {
+    console.log('File "' + fileName + '" does not exist.');
+    return;
+  }
+
+  fetch("execute_pyspark", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(code),
+  }).then((response) => console.log(response));
 }
