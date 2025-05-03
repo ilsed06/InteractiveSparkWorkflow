@@ -1,23 +1,39 @@
 from flask import Flask, request, jsonify, render_template
-from pyspark.sql import SparkSession
-import csv
 import os
 import sys
+import csv
+import traceback
+import findspark
+from flask_cors import CORS
 
-# Declare globals, initialized in the main function after argument checking.
+# Use findspark to locate and initialize PySpark
+try:
+    # Try to find Spark installation
+    findspark.init()
+    print(f"PySpark found at: {findspark.find()}")
+except Exception as e:
+    print(f"Error initializing PySpark: {e}")
+    print("Please install findspark with: pip install findspark")
+    sys.exit(1)
+
+# Now we can import PySpark
+from pyspark.sql import SparkSession
+
+# Declare globals, initialized in the main function after argument checking
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 spark = None
 sc = None
 
 # Directory where data files will be found. Given as a program argument.
 DATA_PATH = None
 
-# Serve the main page.
+# Serve the main page
 @app.route('/', methods=["GET"])
 def index():
     return render_template('index.html')
 
-# Check the existence of a file in the data directory.
+# Check the existence of a file in the data directory
 @app.route("/check_file", methods=["POST"])
 def check_file():
     filename = request.json
@@ -25,17 +41,28 @@ def check_file():
     exists = os.path.isfile(file_path)
     return jsonify({"status": "success" if exists else "error", "path": file_path})
 
-# Execute the pipeline with the given code.
+# Execute the PySpark code received from the frontend
 @app.route('/execute_pyspark', methods=['POST'])
 def execute_pyspark():
     try:
-        code = request.json
+        # Get the code from the request
+        code_data = request.json
+        
+        # Handle different formats of input
+        if isinstance(code_data, dict) and 'code' in code_data:
+            code = code_data['code']
+        else:
+            code = code_data
+            
+        if not code:
+            return jsonify({"status": "error", "message": "No code provided"}), 400
         
         # Create a local namespace where the code will execute
         local_namespace = {
             'sc': sc, 
             'spark': spark,
-            'parse_csv': parse_csv
+            'parse_csv': parse_csv,
+            'DATA_PATH': DATA_PATH  # Make data path available to executed code
         }
         
         # Execute the PySpark code
@@ -46,11 +73,12 @@ def execute_pyspark():
         if 'result' in local_namespace:
             try:
                 result = local_namespace['result']
+                # If result is a DataFrame, collect it
                 if hasattr(result, 'collect'):
-                    result = result.collect()
+                    # Limit collection to prevent memory issues
+                    result = result.limit(1000).collect()
                 # Convert to JSON-serializable format
-                if isinstance(result, list):
-                    result = [str(item) for item in result]
+                result = format_result_item(result)
             except Exception as e:
                 result = f"Result available but could not be collected: {str(e)}"
         
@@ -60,7 +88,6 @@ def execute_pyspark():
             "result": result
         })
     except Exception as e:
-        import traceback
         return jsonify({
             "status": "error", 
             "message": str(e),
@@ -71,21 +98,22 @@ def format_result_item(item):
     """Format complex result items for JSON serialization"""
     if isinstance(item, tuple):
         return {
-            "key": str(item[0]),
+            "key": format_result_item(item[0]),
             "value": format_result_item(item[1])
         }
     elif isinstance(item, dict):
         return {k: format_result_item(v) for k, v in item.items()}
     elif isinstance(item, list):
         return [format_result_item(i) for i in item]
-    elif isinstance(item, str):
-        return item
-    elif isinstance(item, (int, float)):
+    elif hasattr(item, "_asdict"):  # For named tuples and Row objects
+        return format_result_item(item._asdict())
+    elif isinstance(item, (str, int, float, bool, type(None))):
         return item
     else:
-        return str(item)    
+        return str(item)
 
 def parse_csv(path):
+    """Parse a CSV file using PySpark"""
     # If path doesn't start with a slash, add the DATA_PATH
     if not path.startswith('/'):
         path = os.path.join(DATA_PATH, path)
@@ -96,32 +124,62 @@ def parse_csv(path):
     ).map(lambda line: next(csv.reader([line])))
 
 def check_args():
+    """Check command line arguments"""
     if len(sys.argv) != 2:
         print(f"ERROR: Usage: python {os.path.basename(__file__)} <data-directory-path>", file=sys.stderr)
         sys.exit(1)
     
-    if not os.path.isdir(sys.argv[1]):
-        print(f"ERROR: Directory {sys.argv[1]} does not exist.", file=sys.stderr)
+    data_path = os.path.abspath(sys.argv[1])
+    if not os.path.isdir(data_path):
+        print(f"ERROR: Directory {data_path} does not exist.", file=sys.stderr)
+        sys.exit(1)
+    
+    return data_path
+
+def initialize_spark():
+    """Initialize Spark session with proper configuration"""
+    print("Initializing Spark session...")
+    
+    try:
+        # Create a Spark session with more memory for local processing
+        session = SparkSession.builder \
+            .appName("Blockly PySpark") \
+            .config("spark.executor.memory", "2g") \
+            .config("spark.driver.memory", "2g") \
+            .config("spark.ui.enabled", "false") \
+            .master("local[*]") \
+            .getOrCreate()
+        
+        # Set log level to reduce verbosity
+        session.sparkContext.setLogLevel("WARN")
+        
+        print(f"Spark running at: {session.sparkContext.master}")
+        return session
+    except Exception as e:
+        print(f"Error initializing Spark: {e}")
+        traceback.print_exc()
         sys.exit(1)
 
 if __name__ == '__main__':
     # Ensure arguments are valid
-    check_args()
-    DATA_PATH = sys.argv[1]  # Use the absolute path provided
-    
+    DATA_PATH = check_args()
     print(f"Starting Spark with data directory: {DATA_PATH}")
     
-    # Initialize Spark with more memory for local processing
-    spark = SparkSession.builder \
-        .appName("Blockly PySpark") \
-        .config("spark.executor.memory", "1g") \
-        .config("spark.driver.memory", "1g") \
-        .getOrCreate()
-    
-    sc = spark.sparkContext
-    
-    # Print Spark configuration for debugging
-    print(f"Spark running at: {sc.master}")
-    
-    # Run app
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    try:
+        # Initialize Spark
+        spark = initialize_spark()
+        sc = spark.sparkContext
+        
+        # Run Flask app
+        print("Starting Flask server...")
+        app.run(debug=True, host='0.0.0.0', port=5001)
+    except Exception as e:
+        print(f"Error starting application: {e}")
+        traceback.print_exc()
+    finally:
+        # Clean up Spark resources
+        if sc:
+            sc.stop()
+        if spark:
+            spark.stop()
+        print("Spark session stopped.")

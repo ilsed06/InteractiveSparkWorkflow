@@ -1,3 +1,5 @@
+
+
 // Define PySpark-related blocks with multiple RDD support
 Blockly.defineBlocksWithJsonArray([
   // Block for creating a SparkContext (starting point)
@@ -575,6 +577,7 @@ workspace.addChangeListener(() => {
 // Checks and executes the PySpark code
 async function executePyspark() {
   const code = document.getElementById("generatedCode").textContent;
+  console.log("Generated PySpark Code:\n", code);
   
   // Check if the code contains at least one CSV read operation
   if (!window.csvFiles || window.csvFiles.length === 0) {
@@ -589,7 +592,7 @@ async function executePyspark() {
     
     // Check each file
     for (const filename of window.csvFiles) {
-      const fileCheckResponse = await fetch("/check_file", {
+      const fileCheckResponse = await fetch("http://localhost:5001/check_file", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(filename)
@@ -616,7 +619,7 @@ async function executePyspark() {
     showMessage("Executing", "Running PySpark pipeline...");
     
     // Execute the PySpark code
-    const executeResponse = await fetch("/execute_pyspark", {
+    const executeResponse = await fetch("http://localhost:5001/execute_pyspark", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
