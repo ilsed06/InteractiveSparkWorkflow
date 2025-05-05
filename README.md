@@ -1,5 +1,12 @@
 # InteractiveSparkWorkflow
 
+## Description
+
+This program integrates Google Blockly with PySpark to allow users to visually design and execute Spark data processing pipelines. The frontend uses Blockly’s drag-and-drop interface to create Spark operations like data loading, transformations, and joins. Users can specify custom keys for join operations.
+
+The backend, built with Flask, executes the generated PySpark code on a Spark cluster. The system also supports CSV file processing, enabling large dataset manipulation with PySpark’s distributed capabilities. Real-time feedback and results are provided after execution. This low-code interface simplifies big data processing for users.
+
+
 ## Set up environment
 
 1. Create a conda environment:
@@ -40,3 +47,5 @@ Then:
 
 To stop: `Command + C` or `CTRL + C`
 
+
+**Note:** You can replace the dataset folder with any directory that you would like to process. Or you can add more data files (`.csv`) to `/data` folder.
