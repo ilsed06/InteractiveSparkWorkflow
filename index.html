@@ -3,26 +3,222 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blockly PySpark Integration</title>
+    <title>PySpark Visual Pipeline Builder</title>
     <script src="https://unpkg.com/blockly/blockly.min.js"></script>
     <script src="https://unpkg.com/blockly/python_compressed.js"></script>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            margin: 0;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .blockly-container {
+            flex: 1.2;
+            min-width: 500px;
+            width: 70%;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 15px;
+        }
+        .code-container {
+            flex: 0.8;
+            min-width: 200px;
+            width: 30%;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 15px;
+        }
         #blocklyDiv {
-            height: 450px;
+            height: 600px;
             width: 100%;
-            border: 1px solid black;
+            border: 1px solid #ddd;
+        }
+        #generatedCode {
+            height: 300px;
+            width: 100%;
+            overflow: auto;
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            padding: 10px;
+            font-family: monospace;
+            white-space: pre;
+        }
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button.danger {
+            background-color: #e74c3c;
+        }
+        button.danger:hover {
+            background-color: #c0392b;
+        }
+        #executionResults {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            background-color: #f8f8f8;
+            display: none;
+        }
+        #executionResults h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        #executionResults pre {
+            white-space: pre-wrap;
+            overflow-x: auto;
         }
     </style>
 </head>
 <body>
-    <h1>Interactive Spark Workflow</h1>
+    <header>
+        <h1>PySpark Blockly Workflow</h1>
+        <p>Build PySpark data processing pipelines using visual blocks</p>
+    </header>
     
-    <div id="blocklyDiv"></div>
+    <div class="container">
+        <div class="blockly-container">
+            <h2>Build Your Pipeline</h2>
+            <div id="blocklyDiv"></div>
+            <div class="button-container">
+                <button onclick="executePyspark()">Execute Pipeline</button>
+                <button class="danger" onclick="resetWorkspace()">Reset</button>
+            </div>
+        </div>
+        
+        <div class="code-container">
+            <h2>Generated PySpark Code</h2>
+            <pre id="generatedCode"># No code generated yet. Start building your pipeline!</pre>
+            <div id="executionResults"></div>
+        </div>
+    </div>
     
-    <!-- This function generateCode() is in app.js -->
-    <button onclick="generateCode()">Generate PySpark Code</button>
-    <pre id="generatedCode"></pre>
+    <!-- Blockly toolbox definition -->
+    <!-- <xml id="toolbox" style="display: none">
+        <block type="spark_context"></block>
+        <block type="read_csv"></block>
+        <block type="map"></block>
+        <block type="filter"></block>
+        <block type="map_kv"></block>
+        <block type="group_by_key"></block>
+        <block type="reduce_by_key"></block>
+        <block type="map_values"></block>
+        <block type="collect"></block>
+    </xml> -->
+    <!-- Blockly toolbox definition with categories -->
+<xml id="toolbox" style="display: none">
+    <category name="Pipeline" colour="230">
+        <block type="spark_context"></block>
+    </category>
+    <category name="Data Sources" colour="20">
+        <block type="read_csv">
+            <field name="filepath">flights.csv</field>
+            <field name="rdd_name">flights_rdd</field>
+        </block>
+    </category>
+    <category name="Transformations" colour="160">
+        <block type="map">
+            <field name="source_rdd">source_rdd</field>
+            <field name="func">lambda r: r.split(',')</field>
+            <field name="target_rdd">mapped_rdd</field>
+        </block>
+        <block type="filter">
+            <field name="source_rdd">source_rdd</field>
+            <field name="condition">lambda c: c[0] != 'header'</field>
+            <field name="target_rdd">filtered_rdd</field>
+        </block>
+        <block type="map_kv">
+            <field name="source_rdd">source_rdd</field>
+            <field name="func">lambda x: (x[0], int(x[1]))</field>
+            <field name="target_rdd">kv_rdd</field>
+        </block>
+        <block type="group_by_key">
+            <field name="source_rdd">kv_rdd</field>
+            <field name="target_rdd">grouped_rdd</field>
+        </block>
+        <block type="reduce_by_key">
+            <field name="source_rdd">kv_rdd</field>
+            <field name="func">lambda a, b: (a[0] + b[0], a[1] + b[1])</field>
+            <field name="target_rdd">reduced_rdd</field>
+        </block>
+        <block type="map_values">
+            <field name="source_rdd">reduced_rdd</field>
+            <field name="func">lambda x: x[0] / x[1]</field>
+            <field name="target_rdd">result_rdd</field>
+        </block>
+    </category>
+    <category name="Multi-RDD Operations" colour="350">
+        <block type="join">
+            <field name="left_rdd">left_rdd</field>
+            <field name="right_rdd">right_rdd</field>
+            <field name="target_rdd">joined_rdd</field>
+        </block>
+        <block type="left_outer_join">
+            <field name="left_rdd">left_rdd</field>
+            <field name="right_rdd">right_rdd</field>
+            <field name="target_rdd">left_joined_rdd</field>
+        </block>
+        <block type="right_outer_join">
+            <field name="left_rdd">left_rdd</field>
+            <field name="right_rdd">right_rdd</field>
+            <field name="target_rdd">right_joined_rdd</field>
+        </block>
+        <block type="union">
+            <field name="first_rdd">first_rdd</field>
+            <field name="second_rdd">second_rdd</field>
+            <field name="target_rdd">union_rdd</field>
+        </block>
+        <block type="intersection">
+            <field name="first_rdd">first_rdd</field>
+            <field name="second_rdd">second_rdd</field>
+            <field name="target_rdd">intersection_rdd</field>
+        </block>
+        <block type="cogroup">
+            <field name="left_rdd">left_rdd</field>
+            <field name="right_rdd">right_rdd</field>
+            <field name="target_rdd">cogrouped_rdd</field>
+        </block>
+    </category>
+    <category name="Actions" colour="310">
+        <block type="collect">
+            <field name="source_rdd">result_rdd</field>
+        </block>
+    </category>
+</xml>
     
+    <!-- Load the improved app.js script -->
     <script src="app.js"></script>
 </body>
 </html>
