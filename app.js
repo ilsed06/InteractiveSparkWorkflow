@@ -25,7 +25,7 @@ Blockly.defineBlocksWithJsonArray([
         type: "field_input",
         name: "rdd_name",
         text: "flights_rdd",
-      }
+      },
     ],
     previousStatement: "String",
     nextStatement: "String",
@@ -353,6 +353,26 @@ Blockly.defineBlocksWithJsonArray([
     tooltip: "Group data from both RDDs that share the same key",
     helpUrl: "",
   },
+  // Block for defining a UDF (User Defined Function)
+  {
+    type: "haversine",
+    message0: "Define haversine() function",
+    previousStatement: "String",
+    nextStatement: "String",
+    colour: 310,
+    tooltip: "Haversine function for distance calculation",
+    helpUrl: "",
+  },
+  {
+    type: 'sequence',
+    message0: 'Define sequence() function',
+    previousStatement: "String",
+    nextStatement: "String",
+    colour: 210,
+    tooltip: 'A sequence of blocks to be executed in order',
+    helpUrl: ''
+  },
+  
   // Block for collecting results
   {
     type: "collect",
@@ -403,12 +423,20 @@ window.addEventListener('load', initBlockly);
 
 // Generate PySpark code
 function generateCode() {
-  let code = "# PySpark Multi-RDD Pipeline\n";
+  codeBlocks = [];
+
+  codeBlocks.push("# Staring PySpark Pipeline");
+  codeBlocks.push("from pyspark.sql import SparkSession\n");
+  codeBlocks.push("spark = SparkSession.builder.appName('PySpark Pipeline').getOrCreate()");
+  codeBlocks.push("sc = spark.sparkContext\n");
+
+
+  // let code = "# Staring PySpark Pipeline\n";
   
-  // Add SparkSession initialization code - this will be used by the backend
-  code += "# The following variables are available:\n";
-  code += "# - spark: SparkSession\n";
-  code += "# - sc: SparkContext\n\n";
+  // // Add SparkSession initialization code - this will be used by the backend
+  // code += "# The following variables are available:\n";
+  // code += "# - spark: SparkSession\n";
+  // code += "# - sc: SparkContext\n\n";
   
   // Find the starting block
   let startBlock = null;
@@ -431,12 +459,14 @@ function generateCode() {
   let currentBlock = startBlock.getNextBlock();
   
   while (currentBlock) {
+    let code = "";
+
     switch (currentBlock.type) {
       case 'read_csv':
         const filepath = currentBlock.getFieldValue('filepath');
         const rddName = currentBlock.getFieldValue('rdd_name');
         
-        code += `${rddName} = parse_csv("${filepath}")\n`;
+        code = `${rddName} = parse_csv("${filepath}")`;
         rddRegistry.add(rddName);
         csvFiles.push(filepath);
         break;
@@ -446,7 +476,7 @@ function generateCode() {
         const mapFunc = currentBlock.getFieldValue('func');
         const mapTargetRdd = currentBlock.getFieldValue('target_rdd');
         
-        code += `${mapTargetRdd} = ${mapSourceRdd}.map(${mapFunc})\n`;
+        code = `${mapTargetRdd} = ${mapSourceRdd}.map(${mapFunc})`;
         rddRegistry.add(mapTargetRdd);
         break;
         
@@ -455,7 +485,7 @@ function generateCode() {
         const filterCond = currentBlock.getFieldValue('condition');
         const filterTargetRdd = currentBlock.getFieldValue('target_rdd');
         
-        code += `${filterTargetRdd} = ${filterSourceRdd}.filter(${filterCond})\n`;
+        code = `${filterTargetRdd} = ${filterSourceRdd}.filter(${filterCond})`;
         rddRegistry.add(filterTargetRdd);
         break;
         
@@ -464,7 +494,7 @@ function generateCode() {
         const kvFunc = currentBlock.getFieldValue('func');
         const kvTargetRdd = currentBlock.getFieldValue('target_rdd');
         
-        code += `${kvTargetRdd} = ${kvSourceRdd}.map(${kvFunc})\n`;
+        code = `${kvTargetRdd} = ${kvSourceRdd}.map(${kvFunc})`;
         rddRegistry.add(kvTargetRdd);
         break;
         
@@ -472,7 +502,7 @@ function generateCode() {
         const groupSourceRdd = currentBlock.getFieldValue('source_rdd');
         const groupTargetRdd = currentBlock.getFieldValue('target_rdd');
         
-        code += `${groupTargetRdd} = ${groupSourceRdd}.groupByKey()\n`;
+        code = `${groupTargetRdd} = ${groupSourceRdd}.groupByKey()`;
         rddRegistry.add(groupTargetRdd);
         break;
         
@@ -481,7 +511,7 @@ function generateCode() {
         const reduceFunc = currentBlock.getFieldValue('func');
         const reduceTargetRdd = currentBlock.getFieldValue('target_rdd');
         
-        code += `${reduceTargetRdd} = ${reduceSourceRdd}.reduceByKey(${reduceFunc})\n`;
+        code = `${reduceTargetRdd} = ${reduceSourceRdd}.reduceByKey(${reduceFunc})`;
         rddRegistry.add(reduceTargetRdd);
         break;
         
@@ -490,7 +520,7 @@ function generateCode() {
         const valuesFunc = currentBlock.getFieldValue('func');
         const valuesTargetRdd = currentBlock.getFieldValue('target_rdd');
         
-        code += `${valuesTargetRdd} = ${valuesSourceRdd}.mapValues(${valuesFunc})\n`;
+        code = `${valuesTargetRdd} = ${valuesSourceRdd}.mapValues(${valuesFunc})`;
         rddRegistry.add(valuesTargetRdd);
         break;
         
@@ -499,7 +529,7 @@ function generateCode() {
         const joinRightRdd = currentBlock.getFieldValue('right_rdd');
         const joinTargetRdd = currentBlock.getFieldValue('target_rdd');
         
-        code += `${joinTargetRdd} = ${joinLeftRdd}.join(${joinRightRdd})\n`;
+        code = `${joinTargetRdd} = ${joinLeftRdd}.join(${joinRightRdd})`;
         rddRegistry.add(joinTargetRdd);
         break;
         
@@ -508,7 +538,7 @@ function generateCode() {
         const leftJoinRightRdd = currentBlock.getFieldValue('right_rdd');
         const leftJoinTargetRdd = currentBlock.getFieldValue('target_rdd');
         
-        code += `${leftJoinTargetRdd} = ${leftJoinLeftRdd}.leftOuterJoin(${leftJoinRightRdd})\n`;
+        code = `${leftJoinTargetRdd} = ${leftJoinLeftRdd}.leftOuterJoin(${leftJoinRightRdd})`;
         rddRegistry.add(leftJoinTargetRdd);
         break;
         
@@ -517,7 +547,7 @@ function generateCode() {
         const rightJoinRightRdd = currentBlock.getFieldValue('right_rdd');
         const rightJoinTargetRdd = currentBlock.getFieldValue('target_rdd');
         
-        code += `${rightJoinTargetRdd} = ${rightJoinLeftRdd}.rightOuterJoin(${rightJoinRightRdd})\n`;
+        code = `${rightJoinTargetRdd} = ${rightJoinLeftRdd}.rightOuterJoin(${rightJoinRightRdd})`;
         rddRegistry.add(rightJoinTargetRdd);
         break;
         
@@ -526,7 +556,7 @@ function generateCode() {
         const unionSecondRdd = currentBlock.getFieldValue('second_rdd');
         const unionTargetRdd = currentBlock.getFieldValue('target_rdd');
         
-        code += `${unionTargetRdd} = ${unionFirstRdd}.union(${unionSecondRdd})\n`;
+        code = `${unionTargetRdd} = ${unionFirstRdd}.union(${unionSecondRdd})`;
         rddRegistry.add(unionTargetRdd);
         break;
         
@@ -535,7 +565,7 @@ function generateCode() {
         const intersectionSecondRdd = currentBlock.getFieldValue('second_rdd');
         const intersectionTargetRdd = currentBlock.getFieldValue('target_rdd');
         
-        code += `${intersectionTargetRdd} = ${intersectionFirstRdd}.intersection(${intersectionSecondRdd})\n`;
+        code = `${intersectionTargetRdd} = ${intersectionFirstRdd}.intersection(${intersectionSecondRdd})`;
         rddRegistry.add(intersectionTargetRdd);
         break;
         
@@ -544,20 +574,44 @@ function generateCode() {
         const cogroupRightRdd = currentBlock.getFieldValue('right_rdd');
         const cogroupTargetRdd = currentBlock.getFieldValue('target_rdd');
         
-        code += `${cogroupTargetRdd} = ${cogroupLeftRdd}.cogroup(${cogroupRightRdd})\n`;
+        code = `${cogroupTargetRdd} = ${cogroupLeftRdd}.cogroup(${cogroupRightRdd})`;
         rddRegistry.add(cogroupTargetRdd);
         break;
-        
+      
+      // case 'udf_definition':
+      //   const udfName = currentBlock.getFieldValue('udf_name');
+      //   const udfArgs = currentBlock.getFieldValue('udf_args');
+      //   const udfBody = currentBlock.getFieldValue('udf_body');
+      //   code = `def ${udfName}(${udfArgs}):\n    ${udfBody}`;
+      //   break;
+
+      case 'haversine':
+        // const udfName = currentBlock.getFieldValue('udf_name');
+    
+        code = `from math import radians, cos, sin, asin, sqrt\n\n`;
+        code += `def haversine(lat1, lon1, lat2, lon2):\n`;
+        code += `    R = 3956  # radius of Earth in miles\n`;
+        code += `    dlat, dlon = radians(lat2 - lat1), radians(lon2 - lon1)\n`;
+        code += `    a = sin(dlat / 2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2)**2\n`;
+        code += `    return 2 * R * asin(sqrt(a))\n\n`;
+        break;
+
+      case 'sequence':
+        code = `def sequence(n):\n`
+        code += `    if n == 0: return 1\n`;
+        code += `    return sum(comb(n - 1, g - 1) * sequence(n - g) for g in range(1, min(5, n) + 1))\n`;
+        break;
+
       case 'collect':
         const collectSourceRdd = currentBlock.getFieldValue('source_rdd');
-        code += `result = ${collectSourceRdd}.collect()\n`;
-        code += `print("Results from ${collectSourceRdd}:", result)\n`;
+        code = `result = ${collectSourceRdd}.collect()`;
+        // code = `print("Results from ${collectSourceRdd}:", result)\n`;
         break;
         
       default:
-        code += `# Unknown block type: ${currentBlock.type}\n`;
+        code += `# Unknown block type: ${currentBlock.type}`;
     }
-    
+    codeBlocks.push(code);
     currentBlock = currentBlock.getNextBlock();
   }
   
@@ -565,7 +619,7 @@ function generateCode() {
   window.rddRegistry = Array.from(rddRegistry);
   window.csvFiles = csvFiles;
   
-  return code;
+  return codeBlocks.join('\n');
 }
 
 // Event listener to update code display
@@ -662,4 +716,30 @@ function resetWorkspace() {
     initBlockly();
     document.getElementById("executionResults").style.display = "none";
   }
+}
+
+async function saveProject() {
+  const code = document.getElementById("generatedCode").textContent;
+  
+  const executeResponse = await fetch("http://localhost:5001/save_project", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      code: code
+    })
+  });
+
+  const executeResult = await executeResponse.json();
+  if (executeResult.status === "success") {
+    const link = document.createElement('a'); 
+    link.href = executeResult.file_url;
+    link.download = "pyspark.ipynb";
+    link.click();
+  } else {
+    alert("Error saving project");
+  }
+
+
+  
+  
 }

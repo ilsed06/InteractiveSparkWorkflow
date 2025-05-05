@@ -3,222 +3,650 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PySpark Visual Pipeline Builder</title>
+    <title>SparkFlow Designer | Visual PySpark Pipeline Builder</title>
     <script src="https://unpkg.com/blockly/blockly.min.js"></script>
     <script src="https://unpkg.com/blockly/python_compressed.js"></script>
+    <!-- Add Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Add Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #4361ee;
+            --primary-light: #4895ef;
+            --secondary-color: #3f37c9;
+            --accent-color: #f72585;
+            --dark-color: #212529;
+            --light-color: #f8f9fa;
+            --gray-color: #e9ecef;
+            --success-color: #38b000;
+            --warning-color: #ffaa00;
+            --danger-color: #d90429;
+            --chicago-maroon: #861F41;
+            --burnt-orange: #E5751F;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Poppins', sans-serif;
+            background-color: #f3f4f6;
+            color: var(--dark-color);
             margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        header {
-            background-color: #2c3e50;
-            color: white;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        h1 {
-            margin: 0;
-        }
-        .container {
+            padding: 0;
+            min-height: 100vh;
             display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
+            flex-direction: column;
         }
-        .blockly-container {
-            flex: 1.2;
-            min-width: 500px;
-            width: 70%;
+        
+        /* Modern Navbar */
+        .navbar {
+            background: linear-gradient(135deg, var(--chicago-maroon), var(--burnt-orange));
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 20;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .logo i {
+            margin-right: 0.5rem;
+            font-size: 1.75rem;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-links a:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+        
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 220px;
             background-color: white;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            padding: 15px;
+            padding: 1.5rem;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            z-index: 10;
         }
-        .code-container {
-            flex: 0.8;
-            min-width: 200px;
-            width: 30%;
+        
+        .sidebar h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--chicago-maroon);
+        }
+        
+        .sidebar-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        /* Workspace Area */
+        .workspace-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .workspace-header {
+            background-color: #1e1e2e;
+            color: white;
+            padding: 1rem;
+            /* border-bottom: 1px solid #e5e7eb; */
+            border-bottom: 1px solid #313244;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .workspace-title {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        .workspace-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        .workspace-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .blockly-area {
+            flex: 0.7;
+            position: relative;
             background-color: white;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            padding: 15px;
+            border-right: 1px solid #e5e7eb;
         }
+        
         #blocklyDiv {
-            height: 600px;
-            width: 100%;
-            border: 1px solid #ddd;
+            position: absolute;
+            top: 57px;
+            left: 0;
+            right: 0;
+            bottom: 0;
         }
-        #generatedCode {
-            height: 300px;
-            width: 100%;
-            overflow: auto;
-            background-color: #f8f8f8;
-            border: 1px solid #ddd;
-            padding: 10px;
-            font-family: monospace;
-            white-space: pre;
-        }
-        .button-container {
-            display: flex;
-            gap: 10px;
-            margin: 15px 0;
-        }
-        button {
-            padding: 10px 15px;
-            background-color: #3498db;
+        
+        .code-area {
+            /* width: 400px; */
+            flex: 0.6; 
+            background-color: #1e1e2e;
             color: white;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .code-header {
+            padding: 1rem;
+            border-bottom: 1px solid #313244;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .code-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .code-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .code-actions button {
+            background: none;
             border: none;
-            border-radius: 4px;
+            color: #cdd6f4;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 1rem;
         }
-        button:hover {
-            background-color: #2980b9;
+        
+        .code-actions button:hover {
+            color: white;
         }
-        button.danger {
-            background-color: #e74c3c;
+        
+        #generatedCode {
+            flex: 1;
+            padding: 1rem;
+            font-family: 'Source Code Pro', monospace;
+            color: #333;
+            overflow: auto;
+            line-height: 1.5;
+            font-size: 0.9rem;
+            background-color: #f9fafb;
         }
-        button.danger:hover {
-            background-color: #c0392b;
+        
+        /* Status Bar */
+        .status-bar {
+            background-color: #e2e8f0;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #cbd5e1;
         }
-        #executionResults {
-            margin-top: 20px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 15px;
-            background-color: #f8f8f8;
+        
+        /* Button Styles */
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: none;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-light);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .btn-secondary {
+            background-color: white;
+            color: var(--dark-color);
+            border: 1px solid #d1d5db;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #f3f4f6;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #ef233c;
+        }
+        
+        .btn-sm {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.85rem;
+        }
+        
+        /* Card Style */
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        /* Results Area */
+        /* #executionResults {
+            margin-top: 1rem;
             display: none;
+        } */
+
+        #executionResults {
+            /* margin-top: 1rem; */
+            display: none;
+            padding: 1rem;
+            background-color: #2b2b40;
+            color: white;
+            border-top: 1px solid #313244;
+            max-height: 500px;
+            overflow: auto;
         }
-        #executionResults h3 {
-            margin-top: 0;
-            color: #2c3e50;
+
+        
+        .results-container {
+            color: #333;
+            background-color: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
         }
-        #executionResults pre {
+        
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .results-title {
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .results-content {
+            max-height: 300px;
+            overflow: auto;
+        }
+        
+        .results-content pre {
+            padding: 1rem;
+            background-color: #f8fafc;
+            border-radius: 4px;
+            font-family: 'Source Code Pro', monospace;
+            font-size: 0.9rem;
             white-space: pre-wrap;
-            overflow-x: auto;
+        }
+        
+        /* Success, Error, Warning colors */
+        .success {
+            color: var(--success-color);
+        }
+        
+        .error {
+            color: var(--danger-color);
+        }
+        
+        .warning {
+            color: var(--warning-color);
+        }
+        
+        /* Badge */
+        .badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .badge-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .badge-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 1200px) {
+            .code-area {
+                width: 350px;
+            }
+        }
+        
+        @media (max-width: 900px) {
+            .main-content {
+                flex-direction: column;
+                overflow: auto;
+            }
+            
+            .sidebar {
+                width: 100%;
+                padding: 1rem;
+            }
+            
+            .workspace-content {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .blockly-area {
+                height: 500px;
+                position: relative;
+            }
+            
+            .code-area {
+                width: 100%;
+                height: 400px;
+            }
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>PySpark Blockly Workflow</h1>
-        <p>Build PySpark data processing pipelines using visual blocks</p>
-    </header>
+    <!-- Modern Navbar -->
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fas fa-project-diagram"></i>
+            <span>SparkFlow Designer</span>
+        </div>
+        <div class="nav-links">
+            <a href="https://spark.apache.org/docs/latest/api/python/index.html"><i class="fas fa-book"></i> PySpark Docs</a>
+            <a href="https://developers.google.com/blockly"><i class="fas fa-star"></i> Blockly</a>
+            <!-- <a href="#"><i class="fas fa-cog"></i> Settings</a> -->
+        </div>
+    </nav>
     
-    <div class="container">
-        <div class="blockly-container">
-            <h2>Build Your Pipeline</h2>
-            <div id="blocklyDiv"></div>
-            <div class="button-container">
-                <button onclick="executePyspark()">Execute Pipeline</button>
-                <button class="danger" onclick="resetWorkspace()">Reset</button>
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <h3>Project Actions</h3>
+            <div class="sidebar-buttons">
+                <button class="btn btn-primary" onclick="executePyspark()">
+                    <i class="fas fa-play"></i> Run Pipeline
+                </button>
+                <button class="btn btn-secondary" onclick="resetWorkspace()">
+                    <i class="fas fa-sync"></i> Reset
+                </button>
+                <button class="btn btn-secondary" onclick="saveProject()">
+                    <i class="fas fa-save"></i> Save Project
+                </button>
+                <!-- <button class="btn btn-secondary">
+                    <i class="fas fa-folder-open"></i> Load Project
+                </button> -->
             </div>
+            
+            <!-- <div id="executionResults">
+                <h3>Execution Results</h3>
+                <div class="results-container">
+                    <div class="results-header">
+                        <div class="results-title" id="results-title">
+                            <i class="fas fa-check-circle success"></i>
+                            Success
+                        </div>
+                        <button class="btn btn-sm btn-secondary" onclick="document.getElementById('executionResults').style.display = 'none'">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="results-content" id="results-content">
+                        <pre>No results yet. Run your pipeline first.</pre>
+                    </div>
+                </div>
+            </div> -->
         </div>
         
-        <div class="code-container">
-            <h2>Generated PySpark Code</h2>
-            <pre id="generatedCode"># No code generated yet. Start building your pipeline!</pre>
-            <div id="executionResults"></div>
+        <!-- Workspace Area -->
+        <div class="workspace-container">
+            <!-- <div class="workspace-header">
+                <div class="workspace-title">
+                    Visual Pipeline Builder
+                </div>
+            </div> -->
+            
+            <div class="workspace-content">
+                <!-- Blockly Area -->
+                <div class="blockly-area">
+                    <div class="workspace-header">
+                        <div class="workspace-title">
+                            <i class="fa-solid fa-puzzle-piece"></i>
+                            Visual Pipeline Builder
+                        </div>
+                    </div>
+                    <div id="blocklyDiv"></div>
+                </div>
+                
+                <!-- Code Output Area -->
+                <div class="code-area">
+                    <div class="code-header">
+                        <div class="code-title">
+                            <i class="fas fa-code"></i>
+                            Generated PySpark Code
+                        </div>
+                        <div class="code-actions">
+                            <button title="Copy to clipboard">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            <button title="Maximize">
+                                <i class="fas fa-expand-arrows-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <pre id="generatedCode"># No code generated yet.
+# Start building your pipeline!</pre>
+                    <div id="executionResults">
+                        <h4 style="margin-bottom: 10px;">Execution Results</h4>
+                        
+                        <div class="results-container">
+                            <div class="results-header">
+                                <div class="results-title" id="results-title">
+                                    <i class="fas fa-check-circle success"></i>
+                                    Success
+                                </div>
+                                <button class="btn btn-sm btn-secondary" onclick="document.getElementById('executionResults').style.display = 'none'">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="results-content" id="results-content">
+                                <pre>No results yet. Run your pipeline first.</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     
-    <!-- Blockly toolbox definition -->
-    <!-- <xml id="toolbox" style="display: none">
-        <block type="spark_context"></block>
-        <block type="read_csv"></block>
-        <block type="map"></block>
-        <block type="filter"></block>
-        <block type="map_kv"></block>
-        <block type="group_by_key"></block>
-        <block type="reduce_by_key"></block>
-        <block type="map_values"></block>
-        <block type="collect"></block>
-    </xml> -->
-    <!-- Blockly toolbox definition with categories -->
-<xml id="toolbox" style="display: none">
-    <category name="Pipeline" colour="230">
-        <block type="spark_context"></block>
-    </category>
-    <category name="Data Sources" colour="20">
-        <block type="read_csv">
-            <field name="filepath">flights.csv</field>
-            <field name="rdd_name">flights_rdd</field>
-        </block>
-    </category>
-    <category name="Transformations" colour="160">
-        <block type="map">
-            <field name="source_rdd">source_rdd</field>
-            <field name="func">lambda r: r.split(',')</field>
-            <field name="target_rdd">mapped_rdd</field>
-        </block>
-        <block type="filter">
-            <field name="source_rdd">source_rdd</field>
-            <field name="condition">lambda c: c[0] != 'header'</field>
-            <field name="target_rdd">filtered_rdd</field>
-        </block>
-        <block type="map_kv">
-            <field name="source_rdd">source_rdd</field>
-            <field name="func">lambda x: (x[0], int(x[1]))</field>
-            <field name="target_rdd">kv_rdd</field>
-        </block>
-        <block type="group_by_key">
-            <field name="source_rdd">kv_rdd</field>
-            <field name="target_rdd">grouped_rdd</field>
-        </block>
-        <block type="reduce_by_key">
-            <field name="source_rdd">kv_rdd</field>
-            <field name="func">lambda a, b: (a[0] + b[0], a[1] + b[1])</field>
-            <field name="target_rdd">reduced_rdd</field>
-        </block>
-        <block type="map_values">
-            <field name="source_rdd">reduced_rdd</field>
-            <field name="func">lambda x: x[0] / x[1]</field>
-            <field name="target_rdd">result_rdd</field>
-        </block>
-    </category>
-    <category name="Multi-RDD Operations" colour="350">
-        <block type="join">
-            <field name="left_rdd">left_rdd</field>
-            <field name="right_rdd">right_rdd</field>
-            <field name="target_rdd">joined_rdd</field>
-        </block>
-        <block type="left_outer_join">
-            <field name="left_rdd">left_rdd</field>
-            <field name="right_rdd">right_rdd</field>
-            <field name="target_rdd">left_joined_rdd</field>
-        </block>
-        <block type="right_outer_join">
-            <field name="left_rdd">left_rdd</field>
-            <field name="right_rdd">right_rdd</field>
-            <field name="target_rdd">right_joined_rdd</field>
-        </block>
-        <block type="union">
-            <field name="first_rdd">first_rdd</field>
-            <field name="second_rdd">second_rdd</field>
-            <field name="target_rdd">union_rdd</field>
-        </block>
-        <block type="intersection">
-            <field name="first_rdd">first_rdd</field>
-            <field name="second_rdd">second_rdd</field>
-            <field name="target_rdd">intersection_rdd</field>
-        </block>
-        <block type="cogroup">
-            <field name="left_rdd">left_rdd</field>
-            <field name="right_rdd">right_rdd</field>
-            <field name="target_rdd">cogrouped_rdd</field>
-        </block>
-    </category>
-    <category name="Actions" colour="310">
-        <block type="collect">
-            <field name="source_rdd">result_rdd</field>
-        </block>
-    </category>
-</xml>
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div>Ready</div>
+        <div><span class="badge badge-primary">v1.2.0</span></div>
+    </div>
     
-    <!-- Load the improved app.js script -->
+    <!-- Blockly toolbox definition with categories -->
+    <xml id="toolbox" style="display: none">
+        <category name="Pipeline" colour="230">
+            <block type="spark_context"></block>
+        </category>
+        <category name="Data Sources" colour="20">
+            <block type="read_csv">
+                <field name="filepath">flights.csv</field>
+                <field name="rdd_name">flights_rdd</field>
+            </block>
+        </category>
+        <category name="Transformations" colour="160">
+            <block type="map">
+                <field name="source_rdd">source_rdd</field>
+                <field name="func">lambda r: r.split(',')</field>
+                <field name="target_rdd">mapped_rdd</field>
+            </block>
+            <block type="filter">
+                <field name="source_rdd">source_rdd</field>
+                <field name="condition">lambda c: c[0] != 'header'</field>
+                <field name="target_rdd">filtered_rdd</field>
+            </block>
+            <block type="map_kv">
+                <field name="source_rdd">source_rdd</field>
+                <field name="func">lambda x: (x[0], int(x[1]))</field>
+                <field name="target_rdd">kv_rdd</field>
+            </block>
+            <block type="group_by_key">
+                <field name="source_rdd">kv_rdd</field>
+                <field name="target_rdd">grouped_rdd</field>
+            </block>
+            <block type="reduce_by_key">
+                <field name="source_rdd">kv_rdd</field>
+                <field name="func">lambda a, b: (a[0] + b[0], a[1] + b[1])</field>
+                <field name="target_rdd">reduced_rdd</field>
+            </block>
+            <block type="map_values">
+                <field name="source_rdd">reduced_rdd</field>
+                <field name="func">lambda x: x[0] / x[1]</field>
+                <field name="target_rdd">result_rdd</field>
+            </block>
+        </category>
+        <category name="Multi-RDD Operations" colour="350">
+            <block type="join">
+                <field name="left_rdd">left_rdd</field>
+                <field name="right_rdd">right_rdd</field>
+                <field name="target_rdd">joined_rdd</field>
+            </block>
+            <block type="left_outer_join">
+                <field name="left_rdd">left_rdd</field>
+                <field name="right_rdd">right_rdd</field>
+                <field name="target_rdd">left_joined_rdd</field>
+            </block>
+            <block type="right_outer_join">
+                <field name="left_rdd">left_rdd</field>
+                <field name="right_rdd">right_rdd</field>
+                <field name="target_rdd">right_joined_rdd</field>
+            </block>
+            <block type="union">
+                <field name="first_rdd">first_rdd</field>
+                <field name="second_rdd">second_rdd</field>
+                <field name="target_rdd">union_rdd</field>
+            </block>
+            <block type="intersection">
+                <field name="first_rdd">first_rdd</field>
+                <field name="second_rdd">second_rdd</field>
+                <field name="target_rdd">intersection_rdd</field>
+            </block>
+            <block type="cogroup">
+                <field name="left_rdd">left_rdd</field>
+                <field name="right_rdd">right_rdd</field>
+                <field name="target_rdd">cogrouped_rdd</field>
+            </block>
+        </category>
+        <category name="UDFs" colour="290">
+            <block type="haversine"></block>
+            <block type="sequence"></block>
+        </category>
+        <category name="Actions" colour="310">
+            <block type="collect">
+                <field name="source_rdd">result_rdd</field>
+            </block>
+        </category>
+    </xml>
+    
     <script src="app.js"></script>
+    
+    <script>
+    // Add a function to copy code to clipboard
+    document.querySelector('.code-actions .fa-copy').parentElement.addEventListener('click', function() {
+        const codeText = document.getElementById('generatedCode').textContent;
+        navigator.clipboard.writeText(codeText).then(() => {
+            alert('Code copied to clipboard!');
+        });
+    });
+    
+    // Update the showMessage function to work with the new UI
+    function showMessage(title, message) {
+        const resultDiv = document.getElementById("executionResults");
+        const titleElement = document.getElementById("results-title");
+        const contentElement = document.getElementById("results-content");
+        
+        // Update title with appropriate icon
+        let iconClass = 'check-circle success';
+        if (title.toLowerCase().includes('error')) {
+            iconClass = 'times-circle error';
+        } else if (title.toLowerCase().includes('warning') || title.toLowerCase().includes('files not found')) {
+            iconClass = 'exclamation-circle warning';
+        }
+        
+        titleElement.innerHTML = `<i class="fas fa-${iconClass}"></i> ${title}`;
+        contentElement.innerHTML = `<pre>${message}</pre>`;
+        resultDiv.style.display = "block";
+    }
+    </script>
 </body>
 </html>

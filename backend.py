@@ -5,6 +5,7 @@ import csv
 import traceback
 import findspark
 from flask_cors import CORS
+import nbformat
 
 # Use findspark to locate and initialize PySpark
 try:
@@ -56,6 +57,13 @@ def execute_pyspark():
             
         if not code:
             return jsonify({"status": "error", "message": "No code provided"}), 400
+        
+        if "from pyspark.sql import SparkSession" in code:
+            code = code.replace("from pyspark.sql import SparkSession", "")
+        if "spark = SparkSession.builder.appName('PySpark Pipeline').getOrCreate()" in code:
+            code = code.replace("spark = SparkSession.builder.appName('PySpark Pipeline').getOrCreate()", "")
+        if "sc = spark.sparkContext" in code:
+            code = code.replace("sc = spark.sparkContext", "")
         
         # Create a local namespace where the code will execute
         local_namespace = {
@@ -159,6 +167,34 @@ def initialize_spark():
         print(f"Error initializing Spark: {e}")
         traceback.print_exc()
         sys.exit(1)
+
+@app.route('/save_project', methods=['POST'])
+def save_project():
+    """Save the project to a file"""
+    try:
+        project_data = request.json
+        code = project_data.get('code')
+
+        notebook = nbformat.v4.new_notebook()
+        notebook.cells.append(nbformat.v4.new_code_cell(code))
+
+        notebook_path = os.path.join(DATA_PATH, 'pyspark.ipynb')
+
+        # Save the notebook to a file
+        with open(notebook_path, 'w') as f:
+            nbformat.write(notebook, f)
+
+        # if not project_data:
+            
+        #     return jsonify({"status": "error", "message": "No project data provided"}), 400
+        
+        # # Save the project data to a file
+        # with open(os.path.join(DATA_PATH, 'project.json'), 'w') as f:
+        #     f.write(project_data)
+        
+        return jsonify({"status": "success", "file_url": notebook_path})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
 
 if __name__ == '__main__':
     # Ensure arguments are valid
