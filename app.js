@@ -34,32 +34,32 @@ Blockly.defineBlocksWithJsonArray([
     helpUrl: "",
   },
   // Block for map transformation with source RDD
-  {
-    type: "map",
-    message0: "Transform %1 with map %2 as %3",
-    args0: [
-      {
-        type: "field_input",
-        name: "source_rdd",
-        text: "flights_rdd",
-      },
-      {
-        type: "field_input",
-        name: "func",
-        text: "lambda r: r.split(',')",
-      },
-      {
-        type: "field_input",
-        name: "target_rdd",
-        text: "mapped_rdd",
-      }
-    ],
-    previousStatement: "String",
-    nextStatement: "String",
-    colour: 120,
-    tooltip: "Apply a map transformation to a named RDD",
-    helpUrl: "",
-  },
+  // {
+  //   type: "map",
+  //   message0: "Transform %1 with map %2 as %3",
+  //   args0: [
+  //     {
+  //       type: "field_input",
+  //       name: "source_rdd",
+  //       text: "flights_rdd",
+  //     },
+  //     {
+  //       type: "field_input",
+  //       name: "func",
+  //       text: "lambda r: r.split(',')",
+  //     },
+  //     {
+  //       type: "field_input",
+  //       name: "target_rdd",
+  //       text: "mapped_rdd",
+  //     }
+  //   ],
+  //   previousStatement: "String",
+  //   nextStatement: "String",
+  //   colour: 120,
+  //   tooltip: "Apply a map transformation to a named RDD",
+  //   helpUrl: "",
+  // },
   // Block for filter transformation with source RDD
   {
     type: "filter",
@@ -83,14 +83,14 @@ Blockly.defineBlocksWithJsonArray([
     ],
     previousStatement: "String",
     nextStatement: "String",
-    colour: 160,
+    colour: 60,
     tooltip: "Filter rows based on a condition from a named RDD",
     helpUrl: "",
   },
   // Block for map with key-value pairs
   {
     type: "map_kv",
-    message0: "Map %1 to key-value pairs %2 as %3",
+    message0: "Map %1 with function %2 as %3",
     args0: [
       {
         type: "field_input",
@@ -110,7 +110,7 @@ Blockly.defineBlocksWithJsonArray([
     ],
     previousStatement: "String",
     nextStatement: "String",
-    colour: 190,
+    colour: 100,
     tooltip: "Map to key-value pairs for reduction operations",
     helpUrl: "",
   },
@@ -132,7 +132,7 @@ Blockly.defineBlocksWithJsonArray([
     ],
     previousStatement: "String",
     nextStatement: "String",
-    colour: 220,
+    colour: 160,
     tooltip: "Group data by key",
     helpUrl: "",
   },
@@ -159,7 +159,7 @@ Blockly.defineBlocksWithJsonArray([
     ],
     previousStatement: "String",
     nextStatement: "String",
-    colour: 250,
+    colour: 210,
     tooltip: "Reduce values for each key",
     helpUrl: "",
   },
@@ -186,7 +186,7 @@ Blockly.defineBlocksWithJsonArray([
     ],
     previousStatement: "String",
     nextStatement: "String",
-    colour: 280,
+    colour: 250,
     tooltip: "Apply a function to the values of a key-value RDD",
     helpUrl: "",
   },
@@ -214,7 +214,7 @@ Blockly.defineBlocksWithJsonArray([
     ],
     previousStatement: "String",
     nextStatement: "String",
-    colour: 340,
+    colour: 280,
     tooltip: "Join two RDDs based on key",
     helpUrl: "",
   },
@@ -241,7 +241,7 @@ Blockly.defineBlocksWithJsonArray([
     ],
     previousStatement: "String",
     nextStatement: "String",
-    colour: 350,
+    colour: 320,
     tooltip: "Left outer join two RDDs based on key",
     helpUrl: "",
   },
@@ -268,7 +268,7 @@ Blockly.defineBlocksWithJsonArray([
     ],
     previousStatement: "String",
     nextStatement: "String",
-    colour: 360,
+    colour: 0,
     tooltip: "Right outer join two RDDs based on key",
     helpUrl: "",
   },
@@ -295,7 +295,7 @@ Blockly.defineBlocksWithJsonArray([
     ],
     previousStatement: "String",
     nextStatement: "String",
-    colour: 370,
+    colour: 30,
     tooltip: "Create a union of two RDDs",
     helpUrl: "",
   },
@@ -322,7 +322,7 @@ Blockly.defineBlocksWithJsonArray([
     ],
     previousStatement: "String",
     nextStatement: "String",
-    colour: 380,
+    colour: 300,
     tooltip: "Find the intersection of two RDDs",
     helpUrl: "",
   },
@@ -349,7 +349,7 @@ Blockly.defineBlocksWithJsonArray([
     ],
     previousStatement: "String",
     nextStatement: "String",
-    colour: 390,
+    colour: 340,
     tooltip: "Group data from both RDDs that share the same key",
     helpUrl: "",
   },
@@ -359,7 +359,7 @@ Blockly.defineBlocksWithJsonArray([
     message0: "Define haversine() function",
     previousStatement: "String",
     nextStatement: "String",
-    colour: 310,
+    colour: 340,
     tooltip: "Haversine function for distance calculation",
     helpUrl: "",
   },
@@ -372,8 +372,36 @@ Blockly.defineBlocksWithJsonArray([
     tooltip: 'A sequence of blocks to be executed in order',
     helpUrl: ''
   },
-  
+  {
+    type: 'parse_time',
+    message0: 'Define parse_time() function',
+    previousStatement: "String",
+    nextStatement: "String",
+    colour: 280,
+    tooltip: 'A function to parse time strings into datetime objects',
+    helpUrl: ''
+  },
   // Block for collecting results
+  {
+    type: "take",
+    message0: "Take %1 from %2",
+    args0: [
+      {
+        type: "field_input",
+        name: "num",
+        text: "5",
+      },
+      {
+        type: "field_input",
+        name: "source_rdd",
+        text: "result_rdd",
+      }
+    ],
+    previousStatement: "String",
+    colour: 200,
+    tooltip: "Take a sample of the results from the RDD",
+    helpUrl: "",
+  },
   {
     type: "collect",
     message0: "Collect Results from %1",
@@ -424,9 +452,10 @@ window.addEventListener('load', initBlockly);
 // Generate PySpark code
 function generateCode() {
   codeBlocks = [];
+  imports = [];
 
   codeBlocks.push("# Staring PySpark Pipeline");
-  codeBlocks.push("from pyspark.sql import SparkSession\n");
+  imports.push("from pyspark.sql import SparkSession");
   codeBlocks.push("spark = SparkSession.builder.appName('PySpark Pipeline').getOrCreate()");
   codeBlocks.push("sc = spark.sparkContext\n");
 
@@ -465,20 +494,29 @@ function generateCode() {
       case 'read_csv':
         const filepath = currentBlock.getFieldValue('filepath');
         const rddName = currentBlock.getFieldValue('rdd_name');
-        
+
+        let parse_csv_code = `def parse_csv(path):\n`;
+        parse_csv_code += `    if not path.startswith('/'): path = os.path.join(DATA_PATH, path)\n`;
+        parse_csv_code += `    return sc.textFile(path).mapPartitionsWithIndex(\n`;
+        parse_csv_code += `        lambda idx, it: iter(list(it)[1:]) if idx == 0 else it\n`;
+        parse_csv_code += `    ).map(lambda line: next(csv.reader([line])))\n`;
+
+        if (!codeBlocks.includes(parse_csv_code)) {
+          codeBlocks.push(parse_csv_code);
+        }
         code = `${rddName} = parse_csv("${filepath}")`;
         rddRegistry.add(rddName);
         csvFiles.push(filepath);
         break;
         
-      case 'map':
-        const mapSourceRdd = currentBlock.getFieldValue('source_rdd');
-        const mapFunc = currentBlock.getFieldValue('func');
-        const mapTargetRdd = currentBlock.getFieldValue('target_rdd');
+      // case 'map':
+      //   const mapSourceRdd = currentBlock.getFieldValue('source_rdd');
+      //   const mapFunc = currentBlock.getFieldValue('func');
+      //   const mapTargetRdd = currentBlock.getFieldValue('target_rdd');
         
-        code = `${mapTargetRdd} = ${mapSourceRdd}.map(${mapFunc})`;
-        rddRegistry.add(mapTargetRdd);
-        break;
+      //   code = `${mapTargetRdd} = ${mapSourceRdd}.map(${mapFunc})`;
+      //   rddRegistry.add(mapTargetRdd);
+      //   break;
         
       case 'filter':
         const filterSourceRdd = currentBlock.getFieldValue('source_rdd');
@@ -588,8 +626,10 @@ function generateCode() {
       case 'haversine':
         // const udfName = currentBlock.getFieldValue('udf_name');
     
-        code = `from math import radians, cos, sin, asin, sqrt\n\n`;
-        code += `def haversine(lat1, lon1, lat2, lon2):\n`;
+        if (!imports.includes('from math import radians, cos, sin, asin, sqrt')){
+          imports.push('from math import radians, cos, sin, asin, sqrt');
+        }
+        code = `def haversine(lat1, lon1, lat2, lon2):\n`;
         code += `    R = 3956  # radius of Earth in miles\n`;
         code += `    dlat, dlon = radians(lat2 - lat1), radians(lon2 - lon1)\n`;
         code += `    a = sin(dlat / 2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2)**2\n`;
@@ -602,10 +642,25 @@ function generateCode() {
         code += `    return sum(comb(n - 1, g - 1) * sequence(n - g) for g in range(1, min(5, n) + 1))\n`;
         break;
 
+      case 'parse_time':
+        if (!imports.includes('from datetime import datetime')){
+          imports.push('from datetime import datetime')
+        }
+        code += `def parse_time(ts):\n`;
+        code += `    return datetime.strptime(ts, "%Y-%m-%d %H:%M:%S.%f")\n`;
+        break;
+
       case 'collect':
         const collectSourceRdd = currentBlock.getFieldValue('source_rdd');
         code = `result = ${collectSourceRdd}.collect()`;
         // code = `print("Results from ${collectSourceRdd}:", result)\n`;
+        break;
+      
+      case 'take':
+        const takeNum = currentBlock.getFieldValue('num');
+        const takeSourceRdd = currentBlock.getFieldValue('source_rdd');
+        code = `result = ${takeSourceRdd}.take(${takeNum})`;
+        // code = `print("Results from ${takeSourceRdd}:", result)\n`;
         break;
         
       default:
@@ -619,7 +674,7 @@ function generateCode() {
   window.rddRegistry = Array.from(rddRegistry);
   window.csvFiles = csvFiles;
   
-  return codeBlocks.join('\n');
+  return imports.join('\n') + '\n\n' + codeBlocks.join('\n');
 }
 
 // Event listener to update code display
@@ -686,10 +741,10 @@ async function executePyspark() {
     
     if (executeResult.status === "success") {
       // Show success message with results
-      let resultDisplay = "Pipeline executed successfully!";
+      // let resultDisplay = "Pipeline executed successfully!";
       
       if (executeResult.result) {
-        resultDisplay += "\n\nResults:\n" + JSON.stringify(executeResult.result, null, 2);
+        resultDisplay = JSON.stringify(executeResult.result, null, 2);
       }
       
       showMessage("Success", resultDisplay);

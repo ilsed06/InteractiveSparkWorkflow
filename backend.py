@@ -174,7 +174,7 @@ def save_project():
     try:
         project_data = request.json
         code = project_data.get('code')
-
+        
         notebook = nbformat.v4.new_notebook()
         notebook.cells.append(nbformat.v4.new_code_cell(code))
 
@@ -184,14 +184,6 @@ def save_project():
         with open(notebook_path, 'w') as f:
             nbformat.write(notebook, f)
 
-        # if not project_data:
-            
-        #     return jsonify({"status": "error", "message": "No project data provided"}), 400
-        
-        # # Save the project data to a file
-        # with open(os.path.join(DATA_PATH, 'project.json'), 'w') as f:
-        #     f.write(project_data)
-        
         return jsonify({"status": "success", "file_url": notebook_path})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})

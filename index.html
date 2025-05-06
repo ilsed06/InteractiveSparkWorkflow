@@ -26,6 +26,7 @@
             --danger-color: #d90429;
             --chicago-maroon: #861F41;
             --burnt-orange: #E5751F;
+            --hokie-stone: #75787b;
         }
         
         * {
@@ -97,7 +98,7 @@
         
         /* Sidebar */
         .sidebar {
-            width: 220px;
+            width: 200px;
             background-color: white;
             padding: 1.5rem;
             box-shadow: 2px 0 5px rgba(0,0,0,0.05);
@@ -250,12 +251,12 @@
         }
         
         .btn-primary {
-            background-color: var(--primary-color);
+            background-color: var(--chicago-maroon);
             color: white;
         }
         
         .btn-primary:hover {
-            background-color: var(--primary-light);
+            background-color: #CE0058;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         
@@ -434,13 +435,13 @@
             <h3>Project Actions</h3>
             <div class="sidebar-buttons">
                 <button class="btn btn-primary" onclick="executePyspark()">
-                    <i class="fas fa-play"></i> Run Pipeline
+                    <i class="fas fa-play"></i> Execute
                 </button>
-                <button class="btn btn-secondary" onclick="resetWorkspace()">
+                <button class="btn btn-secondary reset" onclick="resetWorkspace()">
                     <i class="fas fa-sync"></i> Reset
                 </button>
-                <button class="btn btn-secondary" onclick="saveProject()">
-                    <i class="fas fa-save"></i> Save Project
+                <button class="btn btn-secondary save" onclick="saveProject()">
+                    <i class="fas fa-save"></i> Save
                 </button>
                 <!-- <button class="btn btn-secondary">
                     <i class="fas fa-folder-open"></i> Load Project
@@ -494,10 +495,10 @@
                             Generated PySpark Code
                         </div>
                         <div class="code-actions">
-                            <button title="Copy to clipboard">
+                            <button style="color: white;" title="Copy to clipboard">
                                 <i class="fas fa-copy"></i>
                             </button>
-                            <button title="Maximize">
+                            <button style="color: white;" title="Maximize">
                                 <i class="fas fa-expand-arrows-alt"></i>
                             </button>
                         </div>
@@ -545,11 +546,11 @@
             </block>
         </category>
         <category name="Transformations" colour="160">
-            <block type="map">
+            <!-- <block type="flat_map">
                 <field name="source_rdd">source_rdd</field>
                 <field name="func">lambda r: r.split(',')</field>
                 <field name="target_rdd">mapped_rdd</field>
-            </block>
+            </block> -->
             <block type="filter">
                 <field name="source_rdd">source_rdd</field>
                 <field name="condition">lambda c: c[0] != 'header'</field>
@@ -559,6 +560,7 @@
                 <field name="source_rdd">source_rdd</field>
                 <field name="func">lambda x: (x[0], int(x[1]))</field>
                 <field name="target_rdd">kv_rdd</field>
+                
             </block>
             <block type="group_by_key">
                 <field name="source_rdd">kv_rdd</field>
@@ -574,8 +576,6 @@
                 <field name="func">lambda x: x[0] / x[1]</field>
                 <field name="target_rdd">result_rdd</field>
             </block>
-        </category>
-        <category name="Multi-RDD Operations" colour="350">
             <block type="join">
                 <field name="left_rdd">left_rdd</field>
                 <field name="right_rdd">right_rdd</field>
@@ -610,10 +610,15 @@
         <category name="UDFs" colour="290">
             <block type="haversine"></block>
             <block type="sequence"></block>
+            <block type="parse_time"></block>
         </category>
         <category name="Actions" colour="310">
             <block type="collect">
                 <field name="source_rdd">result_rdd</field>
+            </block>
+            <block type="take">
+                <field name="source_rdd">result_rdd</field>
+                <field name="num">5</field>
             </block>
         </category>
     </xml>
