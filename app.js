@@ -773,28 +773,57 @@ function resetWorkspace() {
   }
 }
 
+// async function saveProject() {
+//   const code = document.getElementById("generatedCode").textContent;
+  
+//   const executeResponse = await fetch("http://localhost:5001/save_project", {
+//     method: "POST",
+//     headers: { "Content-Type": "application/json" },
+//     body: JSON.stringify({
+//       code: code
+//     })
+//   });
+
+//   const executeResult = await executeResponse.json();
+//   if (executeResult.status === "success") {
+//     const link = document.createElement('a'); 
+//     link.href = executeResult.file_url;
+//     link.download = "pyspark.ipynb";
+//     link.click();
+//   } else {
+//     alert("Error saving project");
+//   }
+// }
+
 async function saveProject() {
   const code = document.getElementById("generatedCode").textContent;
-  
-  const executeResponse = await fetch("http://localhost:5001/save_project", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      code: code
-    })
-  });
 
-  const executeResult = await executeResponse.json();
-  if (executeResult.status === "success") {
-    const link = document.createElement('a'); 
-    link.href = executeResult.file_url;
-    link.download = "pyspark.ipynb";
-    link.click();
-  } else {
-    alert("Error saving project");
+  try {
+    const executeResponse = await fetch("http://localhost:5001/save_project", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: code })
+    });
+
+    const executeResult = await executeResponse.json();
+
+    if (executeResult.status === "success") {
+      const fileUrl = executeResult.file_url;
+
+      // Check if file URL is valid
+      if (fileUrl) {
+        const link = document.createElement('a'); 
+        link.href = fileUrl;  // Make sure the URL is correctly formed, e.g., http://localhost:5001/download/pyspark.ipynb
+        link.download = "pyspark.ipynb";
+        link.click();
+      } else {
+        alert("Error: No file URL returned");
+      }
+    } else {
+      alert("Error saving project: " + executeResult.message);
+    }
+  } catch (error) {
+    alert("Error saving project: " + error.message);
   }
-
-
-  
-  
 }
+

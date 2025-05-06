@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_from_directory
 import os
 import sys
 import csv
@@ -174,19 +174,25 @@ def save_project():
     try:
         project_data = request.json
         code = project_data.get('code')
-        
+
         notebook = nbformat.v4.new_notebook()
         notebook.cells.append(nbformat.v4.new_code_cell(code))
 
-        notebook_path = os.path.join(DATA_PATH, 'pyspark.ipynb')
-
+        notebook_name = "pyspark.ipynb"
         # Save the notebook to a file
-        with open(notebook_path, 'w') as f:
+        with open(notebook_name, 'w') as f:
             nbformat.write(notebook, f)
 
-        return jsonify({"status": "success", "file_url": notebook_path})
+        file_url = f"/downloads/{notebook_name}"
+
+        return jsonify({"status": "success", "file_url": file_url})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
+
+# Serve the notebook file
+@app.route('/downloads/<filename>', methods=['GET'])
+def download_file(filename):
+    return send_from_directory(DATA_PATH, filename, as_attachment=True)
 
 if __name__ == '__main__':
     # Ensure arguments are valid
